@@ -34,16 +34,34 @@ func main() {
 		return nil
 	})
 
-	app.Get("/:code?", func(c *fiber.Ctx) error {
+	app.Get("/", func(c *fiber.Ctx) error {
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": "Send Post request with { 'url': '' } as request to receive { 'link': '/shorten' } link",
+		})
+	})
+
+	app.Get("/:code", func(c *fiber.Ctx) error {
 		code := c.Params("code")
 
-		if code == "" {
-			return c.SendString("Send Post request with { 'url': '' } as request to receive { 'link': '/shorten' } link")
+		var link string
+		db.View(func(tx *bolt.Tx) error {
+			bucket := tx.Bucket([]byte(BUCKET_NAME))
+			link = string(bucket.Get([]byte(code)))
+			return nil
+		})
+
+		if len(link) == 0 {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"error":   "Code invalid",
+			})
 		}
 
 		return c.JSON(fiber.Map{
 			"success": true,
-			"link":    code,
+			"link":    link,
 		})
 	})
 
@@ -70,7 +88,7 @@ func main() {
 			return err
 		})
 
-		return c.JSON(fiber.Map{
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
 			"code":    code, // Fix: provide full link
 		})
