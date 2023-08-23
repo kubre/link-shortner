@@ -52,7 +52,7 @@ func main() {
 	app.Get("/:code", func(c *fiber.Ctx) error {
 		code := c.Params("code")
 
-		var link string
+		link := ""
 		db.View(func(tx *bolt.Tx) error {
 			bucket := tx.Bucket([]byte(BUCKET_NAME))
 			link = string(bucket.Get([]byte(code)))
@@ -73,7 +73,7 @@ func main() {
 	})
 
 	app.Post("/", func(c *fiber.Ctx) error {
-		linkForm := new(LinkForm)
+		linkForm := &LinkForm{}
 
 		if err := c.BodyParser(linkForm); err != nil {
 			return err
@@ -102,13 +102,15 @@ func main() {
 
 	})
 
-	app.Listen(":80")
+	if err := app.Listen(":80"); err != nil {
+		log.Fatal("Unable to run on port 80")
+	}
 }
 
 func getRandCode(length int) string {
 	data := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy0123456789"
 	const LEN_OF_DATA = 61
-	var sb strings.Builder
+	sb := &strings.Builder{}
 	for i := 0; i < length; i++ {
 		sb.WriteByte(data[rand.Int63()%LEN_OF_DATA])
 	}
