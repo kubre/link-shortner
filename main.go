@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,6 +18,12 @@ type LinkForm struct {
 const BUCKET_NAME = "SHORTEN_LINKS"
 
 func main() {
+
+	if len(os.Args) < 2 {
+		log.Fatal("Please add base url as first argument to program")
+	}
+
+	baseUrl := os.Args[1]
 
 	app := fiber.New()
 	db, err := bolt.Open("store", 0600, nil)
@@ -90,7 +97,7 @@ func main() {
 
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
-			"code":    code, // Fix: provide full link
+			"link":    fmt.Sprintf("%s/%s", baseUrl, code),
 		})
 
 	})
